@@ -31,7 +31,7 @@ export class Client {
 
     try {
       const response: AxiosResponse = await axios.get(
-        `${this.baseURL}/api/getPrice?token=${asset}`,
+        `${this.baseURL}/api/get/getPrice?token=${asset}`,
         {
           headers: {
             Authorization: `Bearer ${this.Key}`, // Add authorization header with API key
