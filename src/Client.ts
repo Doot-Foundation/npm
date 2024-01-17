@@ -28,10 +28,10 @@ export class Client {
   async isKeyValid(): Promise<boolean> {
     try {
       const response: AxiosResponse = await axios.get(
-        `${this.baseURL}/api/get/getUserStatus`,
+        `${this.baseURL}/api/get/getKeyStatus`,
         {
           headers: {
-            Authorization: `Bearer ${this.Key}`, // Add authorization header with API key
+            Authorization: `${this.Key}`, // Add authorization header with API key
           },
         }
       );
