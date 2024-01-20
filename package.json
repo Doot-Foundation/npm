@@ -1,6 +1,6 @@
 {
   "name": "@doot-oracles/client",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Client to handle o1js Compatible Asset Feeds For The Mina Protocol.",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,6 @@
   ],
   "author": "br0wnD3v",
   "license": "ISC",
-  "devDependencies": {
-    "typescript": "^5.3.3"
-  },
   "dependencies": {
     "axios": "^1.6.5",
     "o1js": "^0.15.2"
