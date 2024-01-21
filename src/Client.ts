@@ -1,15 +1,32 @@
-const axios = require("axios");
-const { Field, Signature } = require("o1js");
+import axios from "axios";
+import { Field, Mina, PublicKey, Sign, Signature } from "o1js";
 
-const validAssets = ["mina", "ethereum", "solana", "bitcoin", "chainlink"];
+const validAssets: string[] = [
+  "mina",
+  "ethereum",
+  "solana",
+  "bitcoin",
+  "chainlink",
+];
+
+interface ClientResultObject {
+  asset: string;
+  price: string;
+  decimals: string;
+  signature: string;
+  oracle: string;
+}
 
 class Client {
-  constructor(key) {
+  Key: string;
+  BaseURL: string;
+
+  constructor(key: string) {
     this.Key = key;
     this.BaseURL = "https://doot.foundation";
   }
 
-  async isKeyValid() {
+  async isKeyValid(): Promise<boolean> {
     try {
       const response = await axios.get(`${this.BaseURL}/api/get/getKeyStatus`, {
         headers: {
@@ -22,7 +39,7 @@ class Client {
     }
   }
 
-  async Price(asset) {
+  async Price(asset: string): Promise<ClientResultObject> {
     if (validAssets.indexOf(asset) === -1) {
       throw new Error("Invalid asset!");
     }
@@ -47,32 +64,24 @@ class Client {
       } else {
         data = response.data.data;
       }
-      console.log(data);
 
-      const price = Field.from(data.price);
+      const price = data.price;
+      const decimals = "10";
+      const signature = data.signature.signature;
+      const oracle = data.signature.publicKey;
 
-      const fetchedSignature = data.signature;
-      const compatibleSignatureData = BigInt(fetchedSignature.data);
-      const finalSignatureObject = {
-        signature: fetchedSignature.signature,
-        publicKey: fetchedSignature.publicKey,
-        data: compatibleSignatureData,
-      };
-      const signature = Signature.fromObject(finalSignatureObject);
-
-      const decimals = Field.from(10);
-
-      const results = {
+      const results: ClientResultObject = {
         asset: asset,
         price: price,
         decimals: decimals,
         signature: signature,
+        oracle: oracle,
       };
       return results;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to fetch data: ${error.message}`);
     }
   }
 }
 
-module.exports = Client;
+export { Client, ClientResultObject };
