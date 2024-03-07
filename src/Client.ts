@@ -1,5 +1,4 @@
 import axios from "axios";
-import { Field, Mina, PublicKey, Sign, Signature } from "o1js";
 
 const validAssets: string[] = [
   "mina",
@@ -7,6 +6,11 @@ const validAssets: string[] = [
   "solana",
   "bitcoin",
   "chainlink",
+  "ripple",
+  "dogecoin",
+  "polygon",
+  "avalanche",
+  "cardano",
 ];
 
 interface ClientResultObject {
@@ -84,4 +88,4 @@ class Client {
   }
 }
 
-export { Client, ClientResultObject };
+export { Client, ClientResultObject, validAssets };
