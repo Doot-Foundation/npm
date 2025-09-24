@@ -1,33 +1,75 @@
-import { SmartContract, Field, State, PublicKey, Signature, CircuitString } from "o1js";
-export declare const offchainState: import("o1js/dist/node/lib/mina/actions/offchain-state").OffchainState<{
-    readonly prices: {
+import { SmartContract, Field, State, PublicKey, Signature } from 'o1js';
+declare const TokenInformationArray_base: (new (value: {
+    prices: import("o1js/dist/node/lib/provable/field").Field[];
+}) => {
+    prices: import("o1js/dist/node/lib/provable/field").Field[];
+}) & {
+    _isStruct: true;
+} & Omit<import("o1js/dist/node/lib/provable/types/provable-intf").Provable<{
+    prices: import("o1js/dist/node/lib/provable/field").Field[];
+}, {
+    prices: bigint[];
+}>, "fromFields"> & {
+    fromFields: (fields: import("o1js/dist/node/lib/provable/field").Field[]) => {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    };
+} & {
+    fromValue: (value: {
+        prices: import("o1js/dist/node/lib/provable/field").Field[] | bigint[];
+    }) => {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    };
+    toInput: (x: {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    }) => {
+        fields?: Field[] | undefined;
+        packed?: [Field, number][] | undefined;
+    };
+    toJSON: (x: {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    }) => {
+        prices: string[];
+    };
+    fromJSON: (x: {
+        prices: string[];
+    }) => {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    };
+    empty: () => {
+        prices: import("o1js/dist/node/lib/provable/field").Field[];
+    };
+};
+export declare class TokenInformationArray extends TokenInformationArray_base {
+}
+export declare const offchainState: import("o1js/dist/node/lib/mina/v1/actions/offchain-state").OffchainState<{
+    readonly tokenInformation: {
         kind: "offchain-map";
-        keyType: typeof import("o1js/dist/node/lib/provable/field").Field & ((x: string | number | bigint | import("o1js/dist/node/lib/provable/field").Field | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/core/fieldvar").FieldConst) => import("o1js/dist/node/lib/provable/field").Field);
-        valueType: typeof import("o1js/dist/node/lib/provable/field").Field & ((x: string | number | bigint | import("o1js/dist/node/lib/provable/field").Field | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/core/fieldvar").FieldConst) => import("o1js/dist/node/lib/provable/field").Field);
+        keyType: typeof import("o1js/dist/node/lib/provable/field").Field & ((x: string | number | bigint | import("o1js/dist/node/lib/provable/core/fieldvar").FieldConst | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/field").Field) => import("o1js/dist/node/lib/provable/field").Field);
+        valueType: typeof TokenInformationArray;
     };
 }>;
-export declare class PriceProof extends offchainState.Proof {
+export declare class TokenInformationArrayProof extends offchainState.Proof {
 }
 declare const IpfsCID_base: {
-    new (packed: import("o1js/dist/node/lib/provable/field").Field[]): {
+    new (packed: Array<Field>): {
         toString(): string;
-        toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+        toFields(): Array<Field>;
         assertEquals(other: {
-            toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+            toFields(): Array<Field>;
             assertEquals(other: any): void;
             packed: import("o1js/dist/node/lib/provable/field").Field[];
         }): void;
         packed: import("o1js/dist/node/lib/provable/field").Field[];
     };
-    extractField(input: import("o1js/dist/node/lib/provable/string").Character): import("o1js/dist/node/lib/provable/field").Field;
+    extractField(input: import("o1js").Character): Field;
     sizeInBits(): bigint;
     elementsPerField(): number;
-    unpack(fields: import("o1js/dist/node/lib/provable/field").Field[]): import("o1js/dist/node/lib/provable/string").Character[];
-    fromCharacters(input: import("o1js/dist/node/lib/provable/string").Character[]): {
+    unpack(fields: Field[]): import("o1js").Character[];
+    fromCharacters(input: Array<import("o1js").Character>): {
         toString(): string;
-        toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+        toFields(): Array<Field>;
         assertEquals(other: {
-            toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+            toFields(): Array<Field>;
             assertEquals(other: any): void;
             packed: import("o1js/dist/node/lib/provable/field").Field[];
         }): void;
@@ -35,9 +77,9 @@ declare const IpfsCID_base: {
     };
     fromString(str: string): {
         toString(): string;
-        toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+        toFields(): Array<Field>;
         assertEquals(other: {
-            toFields(): import("o1js/dist/node/lib/provable/field").Field[];
+            toFields(): Array<Field>;
             assertEquals(other: any): void;
             packed: import("o1js/dist/node/lib/provable/field").Field[];
         }): void;
@@ -53,9 +95,9 @@ declare const IpfsCID_base: {
     l: number;
     n: number;
     bitSize: bigint;
-    checkPack(unpacked: import("o1js/dist/node/lib/provable/string").Character[]): void;
-    pack(unpacked: import("o1js/dist/node/lib/provable/string").Character[]): import("o1js/dist/node/lib/provable/field").Field[];
-    unpackToBigints(fields: import("o1js/dist/node/lib/provable/field").Field[]): bigint[];
+    checkPack(unpacked: import("o1js").Character[]): void;
+    pack(unpacked: import("o1js").Character[]): Array<Field>;
+    unpackToBigints(fields: Array<Field>): Array<bigint>;
     _isStruct: true;
     toFields: (value: {
         packed: import("o1js/dist/node/lib/provable/field").Field[];
@@ -89,8 +131,8 @@ declare const IpfsCID_base: {
     toInput: (x: {
         packed: import("o1js/dist/node/lib/provable/field").Field[];
     }) => {
-        fields?: import("o1js/dist/node/lib/provable/field").Field[] | undefined;
-        packed?: [import("o1js/dist/node/lib/provable/field").Field, number][] | undefined;
+        fields?: Field[] | undefined;
+        packed?: [Field, number][] | undefined;
     };
     toJSON: (x: {
         packed: import("o1js/dist/node/lib/provable/field").Field[];
@@ -108,63 +150,23 @@ declare const IpfsCID_base: {
 };
 export declare class IpfsCID extends IpfsCID_base {
 }
-declare const PricesArray_base: (new (value: {
-    prices: import("o1js/dist/node/lib/provable/field").Field[];
-}) => {
-    prices: import("o1js/dist/node/lib/provable/field").Field[];
-}) & {
-    _isStruct: true;
-} & Omit<import("o1js/dist/node/lib/provable/types/provable-intf").Provable<{
-    prices: import("o1js/dist/node/lib/provable/field").Field[];
-}, {
-    prices: bigint[];
-}>, "fromFields"> & {
-    fromFields: (fields: import("o1js/dist/node/lib/provable/field").Field[]) => {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    };
-} & {
-    fromValue: (value: {
-        prices: import("o1js/dist/node/lib/provable/field").Field[] | bigint[];
-    }) => {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    };
-    toInput: (x: {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    }) => {
-        fields?: import("o1js/dist/node/lib/provable/field").Field[] | undefined;
-        packed?: [import("o1js/dist/node/lib/provable/field").Field, number][] | undefined;
-    };
-    toJSON: (x: {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    }) => {
-        prices: string[];
-    };
-    fromJSON: (x: {
-        prices: string[];
-    }) => {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    };
-    empty: () => {
-        prices: import("o1js/dist/node/lib/provable/field").Field[];
-    };
-};
-export declare class PricesArray extends PricesArray_base {
-}
 export declare class Doot extends SmartContract {
     commitment: State<import("o1js/dist/node/lib/provable/field").Field>;
-    secret: State<import("o1js/dist/node/lib/provable/field").Field>;
     ipfsCID: State<IpfsCID>;
-    deployerPublicKey: State<PublicKey>;
-    offchainState: State<{
-        root: import("o1js/dist/node/lib/provable/field").Field;
-        length: import("o1js/dist/node/lib/provable/field").Field;
-        actionState: import("o1js/dist/node/lib/provable/field").Field;
-    }>;
+    owner: State<PublicKey>;
+    offchainStateCommitments: State<import("o1js/dist/node/lib/mina/v1/actions/offchain-state-rollup").OffchainStateCommitments>;
     init(): void;
-    initBase(updatedCommitment: Field, updatedIpfsCID: IpfsCID, pricesArray: PricesArray, updatedSecret: Field): Promise<void>;
-    update(updatedCommitment: Field, updatedIpfsCID: IpfsCID, pricesArray: PricesArray, secret: Field): Promise<void>;
-    getPrice(token: CircuitString): Promise<import("o1js/dist/node/lib/provable/field").Field>;
-    settle(proof: PriceProof): Promise<void>;
-    verify(signature: Signature, Price: Field): Promise<void>;
+    offchainState: import("o1js/dist/node/lib/mina/v1/actions/offchain-state").OffchainStateInstance<{
+        readonly tokenInformation: {
+            kind: "offchain-map";
+            keyType: typeof import("o1js/dist/node/lib/provable/field").Field & ((x: string | number | bigint | import("o1js/dist/node/lib/provable/core/fieldvar").FieldConst | import("o1js/dist/node/lib/provable/core/fieldvar").FieldVar | import("o1js/dist/node/lib/provable/field").Field) => import("o1js/dist/node/lib/provable/field").Field);
+            valueType: typeof TokenInformationArray;
+        };
+    }>;
+    initBase(updatedCommitment: Field, updatedIpfsCID: IpfsCID, informationArray: TokenInformationArray): Promise<void>;
+    update(updatedCommitment: Field, updatedIpfsCID: IpfsCID, informationArray: TokenInformationArray): Promise<void>;
+    getPrices(): Promise<TokenInformationArray>;
+    settle(proof: TokenInformationArrayProof): Promise<void>;
+    verify(signature: Signature, deployer: PublicKey, Price: Field): Promise<void>;
 }
 export {};

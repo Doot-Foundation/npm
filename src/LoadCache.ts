@@ -1,7 +1,11 @@
 import { Cache } from "o1js";
 
 const cacheFiles = [
-  { name: "step-vk-doot-getprice", type: "string" },
+  { name: "step-vk-doot-getprices", type: "string" },
+  { name: "step-vk-doot-initbase", type: "string" },
+  { name: "step-vk-doot-settle", type: "string" },
+  { name: "step-vk-doot-update", type: "string" },
+  { name: "step-vk-doot-verify", type: "string" },
   { name: "wrap-vk-doot", type: "string" },
 ];
 
@@ -11,7 +15,7 @@ import path from "path";
 function getHeaderData(filename: string) {
   const filePath = path.join(
     process.cwd(),
-    "utils",
+    "src",
     "constants",
     "cache",
     `${filename}.header`
@@ -22,7 +26,7 @@ function getHeaderData(filename: string) {
 function getFileData(filename: string) {
   const filePath = path.join(
     process.cwd(),
-    "utils",
+    "src",
     "constants",
     "cache",
     filename
