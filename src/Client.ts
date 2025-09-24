@@ -56,7 +56,7 @@ class Client {
 
   constructor(key: string) {
     this.Key = key;
-    this.BaseURL = "http://localhost:3000";
+    this.BaseURL = "https://doot.foundation";
     // Updated endpoints from bootstrap docs
     this.MinaL1Endpoint = "https://api.minascan.io/node/devnet/v1/graphql";
     this.ZekoL2Endpoint = "https://devnet.zeko.io/graphql";
@@ -136,9 +136,9 @@ class Client {
     }
 
     try {
-      // Updated to match UI endpoint structure
+      // Updated to match actual API endpoint
       const response = await axios.get(
-        `${this.BaseURL}/api/get/price?token=${token}`,
+        `${this.BaseURL}/api/get/getPrice?token=${token}`,
         {
           headers: {
             Authorization: `Bearer ${this.Key}`,

@@ -5,6 +5,7 @@ A simple and reliable way to get cryptocurrency prices with zero-knowledge proof
 ## What does this do?
 
 This package helps you get real-time cryptocurrency prices in three smart ways:
+
 1. **API first** - Fast data from our backend server
 2. **Zeko L2 fallback** - If API fails, get data from Zeko Layer 2 (fast blockchain)
 3. **Mina L1 fallback** - If both fail, get data directly from Mina blockchain (most secure)
@@ -12,6 +13,7 @@ This package helps you get real-time cryptocurrency prices in three smart ways:
 ## Supported Cryptocurrencies
 
 We support 10 major cryptocurrencies:
+
 - Mina (MINA)
 - Bitcoin (BTC)
 - Ethereum (ETH)
@@ -26,14 +28,17 @@ We support 10 major cryptocurrencies:
 ## Get Started
 
 ### 1. Get your API key
-Visit [doot.foundation](https://doot.foundation) to get your free API key.
+
+Visit [doot.foundation](https://doot.foundation/dashboard) to get your free API key.
 
 ### 2. Install the package
+
 ```bash
 npm install @doot-oracles/client
 ```
 
 ### 3. Use it in your project
+
 ```javascript
 import { Client } from '@doot-oracles/client';
 
@@ -79,9 +84,9 @@ const l1Data = await client.getDataFromMinaL1('cardano');
 ```javascript
 const isValid = await client.isKeyValid();
 if (isValid) {
-    console.log('API key is working!');
+  console.log('API key is working!');
 } else {
-    console.log('API key is not valid');
+  console.log('API key is not valid');
 }
 ```
 
@@ -107,7 +112,7 @@ Every method returns the same data structure:
 
   price_data: {
     token: 'bitcoin',                    // Which cryptocurrency
-    price: '45123.45',                   // Current price
+    price: '1020123.45',                   // Current price
     decimals: '10',                      // Price precision
     aggregationTimestamp: '1672531200',  // When price was calculated
     signature: '...',                    // Cryptographic signature
@@ -124,10 +129,10 @@ The package handles errors automatically, but you should still wrap calls in try
 
 ```javascript
 try {
-    const priceData = await client.getData('bitcoin');
-    console.log('Success!', priceData.price_data.price);
+  const priceData = await client.getData('bitcoin');
+  console.log('Success!', priceData.price_data.price);
 } catch (error) {
-    console.log('All sources failed:', error.message);
+  console.log('All sources failed:', error.message);
 }
 ```
 
@@ -154,7 +159,8 @@ Here's what happens when you call `getData()`:
 ## Configuration
 
 The client comes pre-configured with:
-- **API Server**: `http://localhost:3000`
+
+- **API Server**: `https://doot.foundation`
 - **Mina L1**: `https://api.minascan.io/node/devnet/v1/graphql`
 - **Zeko L2**: `https://devnet.zeko.io/graphql`
 
@@ -164,75 +170,86 @@ You can use any of these token names (case-sensitive, lowercase):
 
 ```javascript
 const validTokens = [
-  'mina', 'ethereum', 'solana', 'bitcoin',
-  'chainlink', 'ripple', 'dogecoin', 'polygon',
-  'avalanche', 'cardano'
+  'mina',
+  'ethereum',
+  'solana',
+  'bitcoin',
+  'chainlink',
+  'ripple',
+  'dogecoin',
+  'polygon',
+  'avalanche',
+  'cardano',
 ];
 ```
 
 ## Examples
 
 ### Simple price display
+
 ```javascript
 import { Client } from '@doot-oracles/client';
 
 const client = new Client('your-api-key');
 
 async function showPrice() {
-    try {
-        const data = await client.getData('ethereum');
-        console.log(`ETH: $${data.price_data.price}`);
-        console.log(`Source: ${data.source}`);
-    } catch (error) {
-        console.log('Could not get price:', error.message);
-    }
+  try {
+    const data = await client.getData('ethereum');
+    console.log(`ETH: $${data.price_data.price}`);
+    console.log(`Source: ${data.source}`);
+  } catch (error) {
+    console.log('Could not get price:', error.message);
+  }
 }
 
 showPrice();
 ```
 
 ### Compare prices from different sources
+
 ```javascript
 async function compareSources() {
-    const client = new Client('your-api-key');
+  const client = new Client('your-api-key');
 
-    try {
-        // Get Bitcoin price from all sources
-        const apiPrice = await client.getDataFromAPI('bitcoin');
-        const l2Price = await client.getDataFromZekoL2('bitcoin');
-        const l1Price = await client.getDataFromMinaL1('bitcoin');
+  try {
+    // Get Bitcoin price from all sources
+    const apiPrice = await client.getDataFromAPI('bitcoin');
+    const l2Price = await client.getDataFromZekoL2('bitcoin');
+    const l1Price = await client.getDataFromMinaL1('bitcoin');
 
-        console.log('API price:', apiPrice.price_data.price);
-        console.log('L2 price:', l2Price.price_data.price);
-        console.log('L1 price:', l1Price.price_data.price);
-
-    } catch (error) {
-        console.log('Error:', error.message);
-    }
+    console.log('API price:', apiPrice.price_data.price);
+    console.log('L2 price:', l2Price.price_data.price);
+    console.log('L1 price:', l1Price.price_data.price);
+  } catch (error) {
+    console.log('Error:', error.message);
+  }
 }
 ```
 
 ### Build a price dashboard
+
 ```javascript
 import { Client, validtokens } from '@doot-oracles/client';
 
 const client = new Client('your-api-key');
 
 async function showAllPrices() {
-    console.log('Cryptocurrency Prices:');
-    console.log('='.repeat(50));
+  console.log('Cryptocurrency Prices:');
+  console.log('='.repeat(50));
 
-    for (const token of validtokens) {
-        try {
-            const data = await client.getData(token);
-            const price = parseFloat(data.price_data.price);
-            const symbol = token.toUpperCase();
+  for (const token of validtokens) {
+    try {
+      const data = await client.getData(token);
+      const price = parseFloat(data.price_data.price);
+      const symbol = token.toUpperCase();
 
-            console.log(`${symbol.padEnd(8)} $${price.toFixed(2).padStart(12)} (${data.source})`);
-        } catch (error) {
-            console.log(`${token.toUpperCase().padEnd(8)} Error: ${error.message}`);
-        }
+      console.log(
+        `${symbol.padEnd(8)} $${price.toFixed(2).padStart(12)} (${data.source})`
+      );
+    } catch (error) {
+      console.log(`${token.toUpperCase().padEnd(8)} Error: ${error.message}`);
     }
+  }
 }
 
 showAllPrices();
