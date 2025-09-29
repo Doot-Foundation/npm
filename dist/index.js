@@ -1,1 +1,1 @@
-export * from "./src/Client";
+export * from "./src/Client.js";
