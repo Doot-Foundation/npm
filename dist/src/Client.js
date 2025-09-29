@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Mina, PublicKey, fetchAccount } from "o1js";
-import { Doot, offchainState } from "./constants/Doot.js";
+import { Doot, offchainState } from "./constants/Doot";
 const validtokens = [
     "mina",
     "ethereum",
