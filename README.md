@@ -9,11 +9,11 @@ Doot provides verified price data for 10 major cryptocurrencies using zero-knowl
 ## Quick Start
 
 ```bash
-npm install @doot/client
+npm install @dootfoundation/client
 ```
 
 ```javascript
-import { Client } from '@doot/client';
+import { Client } from '@dootfoundation/client';
 
 const client = new Client('your-api-key');
 const price = await client.getData('bitcoin');
@@ -79,7 +79,7 @@ const valid = await client.isKeyValid();
 ### `validtokens`
 List of supported tokens
 ```javascript
-import { validtokens } from '@doot/client';
+import { validtokens } from '@dootfoundation/client';
 console.log(validtokens); // ['bitcoin', 'ethereum', ...]
 ```
 
@@ -116,7 +116,7 @@ All methods return the same format:
 
 ### Basic Price Fetching
 ```javascript
-import { Client } from '@doot/client';
+import { Client } from '@dootfoundation/client';
 
 const client = new Client('your-api-key');
 
@@ -134,7 +134,7 @@ for (const token of tokens) {
 
 ### Using in a Trading Bot
 ```javascript
-import { Client } from '@doot/client';
+import { Client } from '@dootfoundation/client';
 
 const client = new Client(process.env.DOOT_API_KEY);
 
