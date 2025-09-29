@@ -22,7 +22,6 @@ declare class Client {
     ZekoL2Endpoint: string;
     DootL1Address: PublicKey;
     DootL2Address: PublicKey;
-    private withTimeout;
     constructor(key: string);
     /**
      * Check if API key is valid

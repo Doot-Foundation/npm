@@ -27,15 +27,6 @@ const tokenIndexMap = {
     "dogecoin": 9,
 };
 class Client {
-    // Timeout wrapper for blockchain operations
-    async withTimeout(promise, timeoutMs, operation) {
-        return Promise.race([
-            promise,
-            new Promise((_, reject) => {
-                setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs);
-            })
-        ]);
-    }
     constructor(key) {
         this.Key = key;
         this.BaseURL = "https://doot.foundation";
@@ -207,7 +198,7 @@ class Client {
                     proof_data: "",
                 };
             };
-            return await this.withTimeout(operation(), 30000, "Zeko L2 operation");
+            return await operation();
         }
         catch (error) {
             throw new Error(`Zeko L2 request failed: ${error.message}`);
@@ -273,7 +264,7 @@ class Client {
                     proof_data: "",
                 };
             };
-            return await this.withTimeout(operation(), 60000, "Mina L1 operation");
+            return await operation();
         }
         catch (error) {
             throw new Error(`Mina L1 request failed: ${error.message}`);

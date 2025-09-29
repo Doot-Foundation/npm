@@ -53,15 +53,6 @@ class Client {
   DootL1Address: PublicKey;
   DootL2Address: PublicKey;
 
-  // Timeout wrapper for blockchain operations
-  private async withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
-    return Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs);
-      })
-    ]);
-  }
 
   constructor(key: string) {
     this.Key = key;
@@ -267,7 +258,7 @@ class Client {
         };
       };
 
-      return await this.withTimeout(operation(), 30000, "Zeko L2 operation");
+      return await operation();
 
     } catch (error: any) {
       throw new Error(`Zeko L2 request failed: ${error.message}`);
@@ -347,7 +338,7 @@ class Client {
         };
       };
 
-      return await this.withTimeout(operation(), 60000, "Mina L1 operation");
+      return await operation();
 
     } catch (error: any) {
       throw new Error(`Mina L1 request failed: ${error.message}`);
