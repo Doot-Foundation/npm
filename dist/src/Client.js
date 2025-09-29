@@ -1,13 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.validtokens = exports.Client = void 0;
-const axios_1 = __importDefault(require("axios"));
-const o1js_1 = require("o1js");
-const LoadCache_1 = require("./LoadCache");
-const Doot_js_1 = require("./constants/Doot.js");
+import axios from "axios";
+import { Mina, PublicKey, fetchAccount } from "o1js";
+import { Doot, offchainState } from "./constants/Doot.js";
 const validtokens = [
     "mina",
     "ethereum",
@@ -20,7 +13,6 @@ const validtokens = [
     "avalanche",
     "cardano",
 ];
-exports.validtokens = validtokens;
 // Token index mapping for price array
 const tokenIndexMap = {
     "mina": 0,
@@ -35,27 +27,32 @@ const tokenIndexMap = {
     "dogecoin": 9,
 };
 class Client {
+    // Timeout wrapper for blockchain operations
+    async withTimeout(promise, timeoutMs, operation) {
+        return Promise.race([
+            promise,
+            new Promise((_, reject) => {
+                setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs);
+            })
+        ]);
+    }
     constructor(key) {
         this.Key = key;
-        this.BaseURL = "http://localhost:3000";
-        // Updated endpoints from bootstrap docs
+        this.BaseURL = "https://doot.foundation";
         this.MinaL1Endpoint = "https://api.minascan.io/node/devnet/v1/graphql";
         this.ZekoL2Endpoint = "https://devnet.zeko.io/graphql";
-        // L1 address (filler - same as L2 for now)
-        this.DootL1Address = o1js_1.PublicKey.fromBase58("B62qp1HAN4DhUa2x9pDLT5pR2FBHAbDRZ32o4japp9HJigHoBKfy6iR");
-        // L2 address (actual deployed)
-        this.DootL2Address = o1js_1.PublicKey.fromBase58("B62qp1HAN4DhUa2x9pDLT5pR2FBHAbDRZ32o4japp9HJigHoBKfy6iR");
+        // Both L1 and L2 use the same contract address
+        this.DootL1Address = PublicKey.fromBase58("B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP");
+        this.DootL2Address = PublicKey.fromBase58("B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP");
     }
-    capitalizeFirstLetter(input) {
-        if (!input)
-            return input;
-        return input.charAt(0).toUpperCase() + input.slice(1);
-    }
+    /**
+     * Check if API key is valid
+     */
     async isKeyValid() {
         try {
-            const response = await axios_1.default.get(`${this.BaseURL}/api/get/user/getKeyStatus`, {
+            const response = await axios.get(`${this.BaseURL}/api/get/user/getKeyStatus`, {
                 headers: {
-                    Authorization: `${this.Key}`,
+                    Authorization: `Bearer ${this.Key}`,
                 },
             });
             return response.data.status;
@@ -65,54 +62,60 @@ class Client {
         }
     }
     /**
-     * Main method with API -> L2 -> L1 fallback logic
+     * Smart fallback system: API → L2 → L1
+     * Gets price data with automatic fallback through all available sources
      */
     async getData(token) {
         if (validtokens.indexOf(token) === -1) {
             throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
         }
+        let apiError = null;
+        let l2Error = null;
+        let l1Error = null;
         // Try API first
         try {
-            return await this.getDataFromAPI(token);
+            console.log('Trying API...');
+            return await this.getFromAPI(token);
         }
-        catch (apiError) {
-            console.log(`API failed: ${apiError}`);
-            // Try L2 next
-            try {
-                return await this.getDataFromZekoL2(token);
-            }
-            catch (l2Error) {
-                console.log(`L2 failed: ${l2Error}`);
-                // Try L1 last
-                try {
-                    return await this.getDataFromMinaL1(token);
-                }
-                catch (l1Error) {
-                    throw new Error(`All sources failed - API: ${apiError}, L2: ${l2Error}, L1: ${l1Error}`);
-                }
-            }
+        catch (error) {
+            apiError = error;
+            console.log(`API failed: ${error}`);
         }
+        // Try L2 if API fails
+        try {
+            console.log('Trying L2...');
+            return await this.getFromL2(token);
+        }
+        catch (error) {
+            l2Error = error;
+            console.log(`L2 failed: ${error}`);
+        }
+        // Try L1 if L2 fails
+        try {
+            console.log('Trying L1...');
+            return await this.getFromL1(token);
+        }
+        catch (error) {
+            l1Error = error;
+            console.log(`L1 failed: ${error}`);
+        }
+        // All sources failed
+        throw new Error(`All sources failed - API: ${apiError}, L2: ${l2Error}, L1: ${l1Error}`);
     }
     /**
-     * Legacy method for backward compatibility
+     * Get signed price data directly from Doot API (fastest method)
+     * Requires valid API key
      */
-    async Price(token) {
-        return this.getData(token);
-    }
-    /**
-     * Get data from backend API (updated to match UI endpoints)
-     */
-    async getDataFromAPI(token) {
+    async getFromAPI(token) {
         if (validtokens.indexOf(token) === -1) {
             throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
         }
         try {
-            // Updated to match UI endpoint structure
-            const response = await axios_1.default.get(`${this.BaseURL}/api/get/price?token=${token}`, {
+            const response = await axios.get(`${this.BaseURL}/api/get/price`, {
+                params: { token },
                 headers: {
                     Authorization: `Bearer ${this.Key}`,
                 },
-                timeout: 10000, // 10 second timeout
             });
             if (!response?.data?.data) {
                 throw new Error('No data received from API');
@@ -145,96 +148,136 @@ class Client {
         }
     }
     /**
-     * Get data directly from Zeko L2
+     * Get price data directly from Zeko L2 blockchain (fast, ~5-30s)
+     * Reads from deployed smart contract on Zeko L2
      */
-    async getDataFromZekoL2(token) {
+    async getFromL2(token) {
         if (validtokens.indexOf(token) === -1) {
             throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
         }
         try {
-            // Setup Zeko L2 network
-            const ZekoL2 = o1js_1.Mina.Network({
-                mina: this.ZekoL2Endpoint,
-                archive: this.ZekoL2Endpoint,
-            });
-            o1js_1.Mina.setActiveInstance(ZekoL2);
-            // Fetch account and compile contract
-            await (0, o1js_1.fetchAccount)({ publicKey: this.DootL2Address });
-            const cacheFiles = await (0, LoadCache_1.fetchFiles)();
-            await Doot_js_1.Doot.compile({ cache: (0, LoadCache_1.DootFileSystem)(cacheFiles) });
-            const dootZkApp = new Doot_js_1.Doot(this.DootL2Address);
-            const allPrices = await dootZkApp.getPrices();
-            // Extract specific token price
-            const tokenIndex = tokenIndexMap[token];
-            if (tokenIndex === undefined) {
-                throw new Error(`Token index not found for: ${token}`);
-            }
-            const tokenPrice = allPrices.prices[tokenIndex];
-            return {
-                fromAPI: false,
-                fromL2: true,
-                fromL1: false,
-                source: 'L2',
-                price_data: {
-                    token: token,
-                    price: tokenPrice.toString(),
-                    decimals: "10",
-                    aggregationTimestamp: Date.now().toString(),
-                    signature: "",
-                    oracle: this.DootL2Address.toBase58(),
-                },
-                proof_data: "",
+            const operation = async () => {
+                console.log(`Connecting to Zeko L2: ${this.ZekoL2Endpoint}`);
+                // Setup Zeko L2 network
+                const ZekoL2 = Mina.Network({
+                    mina: this.ZekoL2Endpoint,
+                    archive: this.ZekoL2Endpoint,
+                });
+                Mina.setActiveInstance(ZekoL2);
+                console.log(`Fetching account: ${this.DootL2Address.toBase58()}`);
+                const accountResult = await fetchAccount({ publicKey: this.DootL2Address });
+                if (accountResult.error) {
+                    throw new Error(`Failed to fetch account: ${accountResult.error.statusText}`);
+                }
+                console.log('Compiling offchain state...');
+                if (offchainState && typeof offchainState.compile === 'function') {
+                    try {
+                        await offchainState.compile();
+                    }
+                    catch (error) {
+                        console.error('offchainState compilation failed with:', error);
+                        throw new Error(`OffchainState compilation failed: ${error instanceof Error ? error.message : String(error)}`);
+                    }
+                }
+                console.log('Compiling Doot contract...');
+                await Doot.compile();
+                console.log('Getting prices from contract...');
+                const dootZkApp = new Doot(this.DootL2Address);
+                const allPrices = await dootZkApp.getPrices();
+                // Extract specific token price
+                const tokenIndex = tokenIndexMap[token];
+                if (tokenIndex === undefined) {
+                    throw new Error(`Token index not found for: ${token}`);
+                }
+                const tokenPrice = allPrices.prices[tokenIndex];
+                console.log(`Retrieved ${token} price from L2: ${tokenPrice.toString()}`);
+                return {
+                    fromAPI: false,
+                    fromL2: true,
+                    fromL1: false,
+                    source: 'L2',
+                    price_data: {
+                        token: token,
+                        price: tokenPrice.toString(),
+                        decimals: "10",
+                        aggregationTimestamp: Date.now().toString(),
+                        signature: "",
+                        oracle: this.DootL2Address.toBase58(),
+                    },
+                    proof_data: "",
+                };
             };
+            return await this.withTimeout(operation(), 30000, "Zeko L2 operation");
         }
         catch (error) {
             throw new Error(`Zeko L2 request failed: ${error.message}`);
         }
     }
     /**
-     * Get data directly from Mina L1
+     * Get price data directly from Mina L1 blockchain (secure, ~30-60s)
+     * Reads from deployed smart contract on Mina L1
      */
-    async getDataFromMinaL1(token) {
+    async getFromL1(token) {
         if (validtokens.indexOf(token) === -1) {
             throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
         }
         try {
-            // Setup Mina L1 network
-            const MinaL1 = o1js_1.Mina.Network({
-                mina: this.MinaL1Endpoint,
-                archive: this.MinaL1Endpoint,
-            });
-            o1js_1.Mina.setActiveInstance(MinaL1);
-            // Fetch account and compile contract
-            await (0, o1js_1.fetchAccount)({ publicKey: this.DootL1Address });
-            const cacheFiles = await (0, LoadCache_1.fetchFiles)();
-            await Doot_js_1.Doot.compile({ cache: (0, LoadCache_1.DootFileSystem)(cacheFiles) });
-            const dootZkApp = new Doot_js_1.Doot(this.DootL1Address);
-            const allPrices = await dootZkApp.getPrices();
-            // Extract specific token price
-            const tokenIndex = tokenIndexMap[token];
-            if (tokenIndex === undefined) {
-                throw new Error(`Token index not found for: ${token}`);
-            }
-            const tokenPrice = allPrices.prices[tokenIndex];
-            return {
-                fromAPI: false,
-                fromL2: false,
-                fromL1: true,
-                source: 'L1',
-                price_data: {
-                    token: token,
-                    price: tokenPrice.toString(),
-                    decimals: "10",
-                    aggregationTimestamp: Date.now().toString(),
-                    signature: "",
-                    oracle: this.DootL1Address.toBase58(),
-                },
-                proof_data: "",
+            const operation = async () => {
+                console.log(`Connecting to Mina L1: ${this.MinaL1Endpoint}`);
+                // Setup Mina L1 network
+                const MinaL1 = Mina.Network({
+                    mina: this.MinaL1Endpoint,
+                    archive: this.MinaL1Endpoint,
+                });
+                Mina.setActiveInstance(MinaL1);
+                console.log(`Fetching account: ${this.DootL1Address.toBase58()}`);
+                const accountResult = await fetchAccount({ publicKey: this.DootL1Address });
+                if (accountResult.error) {
+                    throw new Error(`Failed to fetch account: ${accountResult.error.statusText}`);
+                }
+                console.log('Compiling offchain state...');
+                if (offchainState && typeof offchainState.compile === 'function') {
+                    try {
+                        await offchainState.compile();
+                    }
+                    catch (error) {
+                        console.error('offchainState compilation failed with:', error);
+                        throw new Error(`OffchainState compilation failed: ${error instanceof Error ? error.message : String(error)}`);
+                    }
+                }
+                console.log('Compiling Doot contract...');
+                await Doot.compile();
+                console.log('Getting prices from contract...');
+                const dootZkApp = new Doot(this.DootL1Address);
+                const allPrices = await dootZkApp.getPrices();
+                // Extract specific token price
+                const tokenIndex = tokenIndexMap[token];
+                if (tokenIndex === undefined) {
+                    throw new Error(`Token index not found for: ${token}`);
+                }
+                const tokenPrice = allPrices.prices[tokenIndex];
+                console.log(`Retrieved ${token} price from L1: ${tokenPrice.toString()}`);
+                return {
+                    fromAPI: false,
+                    fromL2: false,
+                    fromL1: true,
+                    source: 'L1',
+                    price_data: {
+                        token: token,
+                        price: tokenPrice.toString(),
+                        decimals: "10",
+                        aggregationTimestamp: Date.now().toString(),
+                        signature: "",
+                        oracle: this.DootL1Address.toBase58(),
+                    },
+                    proof_data: "",
+                };
             };
+            return await this.withTimeout(operation(), 60000, "Mina L1 operation");
         }
         catch (error) {
             throw new Error(`Mina L1 request failed: ${error.message}`);
         }
     }
 }
-exports.Client = Client;
+export { Client, validtokens };

@@ -22,28 +22,31 @@ declare class Client {
     ZekoL2Endpoint: string;
     DootL1Address: PublicKey;
     DootL2Address: PublicKey;
+    private withTimeout;
     constructor(key: string);
-    capitalizeFirstLetter(input: string): string;
+    /**
+     * Check if API key is valid
+     */
     isKeyValid(): Promise<boolean>;
     /**
-     * Main method with API -> L2 -> L1 fallback logic
+     * Smart fallback system: API → L2 → L1
+     * Gets price data with automatic fallback through all available sources
      */
     getData(token: string): Promise<ClientResultObject>;
     /**
-     * Legacy method for backward compatibility
+     * Get signed price data directly from Doot API (fastest method)
+     * Requires valid API key
      */
-    Price(token: string): Promise<ClientResultObject>;
+    getFromAPI(token: string): Promise<ClientResultObject>;
     /**
-     * Get data from backend API (updated to match UI endpoints)
+     * Get price data directly from Zeko L2 blockchain (fast, ~5-30s)
+     * Reads from deployed smart contract on Zeko L2
      */
-    getDataFromAPI(token: string): Promise<ClientResultObject>;
+    getFromL2(token: string): Promise<ClientResultObject>;
     /**
-     * Get data directly from Zeko L2
+     * Get price data directly from Mina L1 blockchain (secure, ~30-60s)
+     * Reads from deployed smart contract on Mina L1
      */
-    getDataFromZekoL2(token: string): Promise<ClientResultObject>;
-    /**
-     * Get data directly from Mina L1
-     */
-    getDataFromMinaL1(token: string): Promise<ClientResultObject>;
+    getFromL1(token: string): Promise<ClientResultObject>;
 }
 export { Client, ClientResultObject, validtokens };

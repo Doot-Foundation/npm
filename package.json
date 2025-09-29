@@ -1,7 +1,8 @@
 {
-  "name": "@doot-oracles/client",
-  "version": "1.2.0",
+  "name": "@doot/client",
+  "version": "1.0.0",
   "description": "Doot client to handle o1js compatible data feeds For The Mina Protocol.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -17,6 +18,7 @@
     "dev": "npm run build:watch",
     "start": "node dist/index.js",
     "test": "jest --passWithNoTests",
+    "test:fallback": "node tests/test-fallback.js",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
@@ -67,11 +69,15 @@
     "o1js": "^2.9.0",
     "o1js-pack": "^0.8.0"
   },
+  "peerDependencies": {
+    "o1js": "^2.*"
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.9.3",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
+    "dotenv": "^17.2.2",
     "eslint": "^9.15.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
@@ -84,8 +90,13 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "roots": ["<rootDir>/src"],
-    "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.ts",
+      "**/?(*.)+(spec|test).ts"
+    ],
     "collectCoverageFrom": [
       "src/**/*.ts",
       "!src/**/*.d.ts",
@@ -95,7 +106,10 @@
   "eslintConfig": {
     "root": true,
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint", "prettier"],
+    "plugins": [
+      "@typescript-eslint",
+      "prettier"
+    ],
     "extends": [
       "eslint:recommended",
       "@typescript-eslint/recommended",

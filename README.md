@@ -1,267 +1,206 @@
-# @doot-oracles/client
+# Doot Oracle Client
 
-A simple and reliable way to get cryptocurrency prices with zero-knowledge proofs for Mina Protocol applications.
+Get real-time cryptocurrency prices with zero-knowledge proofs on the Mina blockchain.
 
-## What does this do?
+## What is Doot?
 
-This package helps you get real-time cryptocurrency prices in three smart ways:
+Doot provides verified price data for 10 major cryptocurrencies using zero-knowledge proofs. Your app gets fast, reliable prices with automatic fallback across multiple sources.
 
-1. **API first** - Fast data from our backend server
-2. **Zeko L2 fallback** - If API fails, get data from Zeko Layer 2 (fast blockchain)
-3. **Mina L1 fallback** - If both fail, get data directly from Mina blockchain (most secure)
-
-## Supported Cryptocurrencies
-
-We support 10 major cryptocurrencies:
-
-- Mina (MINA)
-- Bitcoin (BTC)
-- Ethereum (ETH)
-- Solana (SOL)
-- Ripple (XRP)
-- Cardano (ADA)
-- Avalanche (AVAX)
-- Polygon (MATIC)
-- Chainlink (LINK)
-- Dogecoin (DOGE)
-
-## Get Started
-
-### 1. Get your API key
-
-Visit [doot.foundation](https://doot.foundation/dashboard) to get your free API key.
-
-### 2. Install the package
+## Quick Start
 
 ```bash
-npm install @doot-oracles/client
+npm install @doot/client
 ```
-
-### 3. Use it in your project
 
 ```javascript
-import { Client } from '@doot-oracles/client';
+import { Client } from '@doot/client';
 
-// Create a client with your API key
-const client = new Client('your-api-key-here');
+const client = new Client('your-api-key');
+const price = await client.getData('bitcoin');
 
-// Get Bitcoin price (tries API → L2 → L1 automatically)
-const bitcoinData = await client.getData('bitcoin');
-console.log(`Bitcoin price: $${bitcoinData.price_data.price}`);
+console.log(`Bitcoin: $${price.price_data.price}`);
 ```
 
-## How to use
+## Supported Tokens
 
-### Basic Usage (Recommended)
+- `bitcoin` - Bitcoin (BTC)
+- `ethereum` - Ethereum (ETH)
+- `mina` - Mina Protocol (MINA)
+- `solana` - Solana (SOL)
+- `chainlink` - Chainlink (LINK)
+- `ripple` - XRP (XRP)
+- `dogecoin` - Dogecoin (DOGE)
+- `polygon` - Polygon (MATIC)
+- `avalanche` - Avalanche (AVAX)
+- `cardano` - Cardano (ADA)
 
-The `getData()` method is smart - it tries to get data from the fastest source first, then falls back if needed:
+## How It Works
 
+Doot uses a 3-layer fallback system:
+
+1. **API** (fastest, ~100ms) - Direct from Doot servers
+2. **L2** (fast, ~10-30s) - Zeko Layer 2 blockchain
+3. **L1** (secure, ~30-60s) - Mina mainnet blockchain
+
+If one source fails, it automatically tries the next one.
+
+## API Methods
+
+### `getData(token)`
+Smart fallback through all sources (recommended)
 ```javascript
-// This tries API first, then L2, then L1 if needed
-const priceData = await client.getData('ethereum');
-
-console.log('Price:', priceData.price_data.price);
-console.log('Got data from:', priceData.source); // 'API', 'L2', or 'L1'
+const price = await client.getData('ethereum');
 ```
 
-### Get data from specific sources
-
-If you want to get data from a specific source, you can:
-
+### `getFromAPI(token)`
+Get price directly from API (requires valid key)
 ```javascript
-// Get data from API only
-const apiData = await client.getDataFromAPI('mina');
-
-// Get data from Zeko L2 only
-const l2Data = await client.getDataFromZekoL2('solana');
-
-// Get data from Mina L1 only
-const l1Data = await client.getDataFromMinaL1('cardano');
+const price = await client.getFromAPI('bitcoin');
 ```
 
-### Check if your API key works
-
+### `getFromL2(token)`
+Get price from Zeko L2 blockchain
 ```javascript
-const isValid = await client.isKeyValid();
-if (isValid) {
-  console.log('API key is working!');
-} else {
-  console.log('API key is not valid');
-}
+const price = await client.getFromL2('solana');
 ```
 
-### Backward compatibility
-
-If you're upgrading from an older version, the old `Price()` method still works:
-
+### `getFromL1(token)`
+Get price from Mina L1 blockchain
 ```javascript
-// This works the same as getData()
-const priceData = await client.Price('bitcoin');
+const price = await client.getFromL1('mina');
 ```
 
-## What you get back
+### `isKeyValid()`
+Check if your API key works
+```javascript
+const valid = await client.isKeyValid();
+```
 
-Every method returns the same data structure:
+### `validtokens`
+List of supported tokens
+```javascript
+import { validtokens } from '@doot/client';
+console.log(validtokens); // ['bitcoin', 'ethereum', ...]
+```
+
+## Response Format
+
+All methods return the same format:
 
 ```javascript
 {
-  fromAPI: true,     // Did data come from API?
-  fromL2: false,     // Did data come from L2?
-  fromL1: false,     // Did data come from L1?
-  source: 'API',     // Which source was used: 'API', 'L2', or 'L1'
-
+  source: 'API',           // Which source provided the data
+  fromAPI: true,           // Boolean flags for source
+  fromL2: false,
+  fromL1: false,
   price_data: {
-    token: 'bitcoin',                    // Which cryptocurrency
-    price: '1020123.45',                   // Current price
-    decimals: '10',                      // Price precision
-    aggregationTimestamp: '1672531200',  // When price was calculated
-    signature: '...',                    // Cryptographic signature
-    oracle: 'B62q...'                   // Oracle address
+    token: 'bitcoin',
+    price: '65432.12',     // Price as string
+    decimals: '10',        // Decimal places
+    aggregationTimestamp: '1640995200000',
+    signature: 'ABC123...', // ZK proof signature
+    oracle: 'B62q...'      // Oracle public key
   },
-
-  proof_data: '{...}'  // Zero-knowledge proof data
+  proof_data: '{...}'      // Zero-knowledge proof data
 }
 ```
 
-## Error handling
+## Get an API Key
 
-The package handles errors automatically, but you should still wrap calls in try-catch:
-
-```javascript
-try {
-  const priceData = await client.getData('bitcoin');
-  console.log('Success!', priceData.price_data.price);
-} catch (error) {
-  console.log('All sources failed:', error.message);
-}
-```
-
-## Advanced: Understanding the fallback
-
-Here's what happens when you call `getData()`:
-
-1. **Try API first** (fastest, ~100ms)
-   - If successful → return data
-   - If fails → try step 2
-
-2. **Try Zeko L2** (fast blockchain, ~5 seconds)
-   - Connect to Zeko network
-   - Read from smart contract
-   - If successful → return data
-   - If fails → try step 3
-
-3. **Try Mina L1** (secure blockchain, ~30 seconds)
-   - Connect to Mina network
-   - Read from smart contract
-   - If successful → return data
-   - If fails → throw error
-
-## Configuration
-
-The client comes pre-configured with:
-
-- **API Server**: `https://doot.foundation`
-- **Mina L1**: `https://api.minascan.io/node/devnet/v1/graphql`
-- **Zeko L2**: `https://devnet.zeko.io/graphql`
-
-## Supported tokens
-
-You can use any of these token names (case-sensitive, lowercase):
-
-```javascript
-const validTokens = [
-  'mina',
-  'ethereum',
-  'solana',
-  'bitcoin',
-  'chainlink',
-  'ripple',
-  'dogecoin',
-  'polygon',
-  'avalanche',
-  'cardano',
-];
-```
+1. Visit [doot.foundation/dashboard](https://doot.foundation/dashboard)
+2. Sign up for a free account
+3. Generate your API key
+4. Start building!
 
 ## Examples
 
-### Simple price display
-
+### Basic Price Fetching
 ```javascript
-import { Client } from '@doot-oracles/client';
+import { Client } from '@doot/client';
 
 const client = new Client('your-api-key');
 
-async function showPrice() {
+// Get Bitcoin price with fallback
+const btc = await client.getData('bitcoin');
+console.log(`BTC: $${btc.price_data.price}`);
+
+// Get multiple prices
+const tokens = ['bitcoin', 'ethereum', 'solana'];
+for (const token of tokens) {
+  const price = await client.getData(token);
+  console.log(`${token}: $${price.price_data.price}`);
+}
+```
+
+### Using in a Trading Bot
+```javascript
+import { Client } from '@doot/client';
+
+const client = new Client(process.env.DOOT_API_KEY);
+
+async function checkPrices() {
   try {
-    const data = await client.getData('ethereum');
-    console.log(`ETH: $${data.price_data.price}`);
-    console.log(`Source: ${data.source}`);
+    const eth = await client.getData('ethereum');
+    const btc = await client.getData('bitcoin');
+
+    const ethPrice = parseFloat(eth.price_data.price);
+    const btcPrice = parseFloat(btc.price_data.price);
+
+    console.log(`ETH/BTC ratio: ${(ethPrice / btcPrice).toFixed(4)}`);
   } catch (error) {
-    console.log('Could not get price:', error.message);
+    console.error('Price fetch failed:', error.message);
   }
 }
 
-showPrice();
+setInterval(checkPrices, 60000); // Check every minute
 ```
 
-### Compare prices from different sources
+### Environment Variables
+```bash
+# .env file
+DOOT_API_KEY=your-api-key-here
+```
 
 ```javascript
-async function compareSources() {
-  const client = new Client('your-api-key');
+import dotenv from 'dotenv';
+dotenv.config();
 
-  try {
-    // Get Bitcoin price from all sources
-    const apiPrice = await client.getDataFromAPI('bitcoin');
-    const l2Price = await client.getDataFromZekoL2('bitcoin');
-    const l1Price = await client.getDataFromMinaL1('bitcoin');
-
-    console.log('API price:', apiPrice.price_data.price);
-    console.log('L2 price:', l2Price.price_data.price);
-    console.log('L1 price:', l1Price.price_data.price);
-  } catch (error) {
-    console.log('Error:', error.message);
-  }
-}
+const client = new Client(process.env.DOOT_API_KEY);
 ```
 
-### Build a price dashboard
+## Error Handling
 
 ```javascript
-import { Client, validtokens } from '@doot-oracles/client';
-
-const client = new Client('your-api-key');
-
-async function showAllPrices() {
-  console.log('Cryptocurrency Prices:');
-  console.log('='.repeat(50));
-
-  for (const token of validtokens) {
-    try {
-      const data = await client.getData(token);
-      const price = parseFloat(data.price_data.price);
-      const symbol = token.toUpperCase();
-
-      console.log(
-        `${symbol.padEnd(8)} $${price.toFixed(2).padStart(12)} (${data.source})`
-      );
-    } catch (error) {
-      console.log(`${token.toUpperCase().padEnd(8)} Error: ${error.message}`);
-    }
+try {
+  const price = await client.getData('bitcoin');
+  console.log('Success:', price);
+} catch (error) {
+  if (error.message.includes('Invalid token')) {
+    console.log('Token not supported');
+  } else if (error.message.includes('401')) {
+    console.log('Invalid API key');
+  } else {
+    console.log('Network or service error');
   }
 }
-
-showAllPrices();
 ```
 
-## Need help?
+## Requirements
 
-- **Documentation**: Check our [full documentation](https://docs.doot.foundation)
-- **API Key**: Get one at [doot.foundation](https://doot.foundation)
-- **Issues**: Report bugs on [GitHub](https://github.com/Doot-Foundation/npm/issues)
-- **Support**: Contact us at support@doot.foundation
+- Node.js 18+
+- Internet connection
+- API key for fastest access (free at doot.foundation)
+
+## No Setup Required
+
+This package works in any Node.js environment. No special blockchain setup needed - just install and use!
+
+## Support
+
+- Documentation: [docs.doot.foundation](https://docs.doot.foundation)
+- Issues: [GitHub Issues](https://github.com/Doot-Foundation/npm/issues)
+- Website: [doot.foundation](https://doot.foundation)
 
 ## License
 
-ISC License - see LICENSE.md for details.
+ISC License - see LICENSE.md file for details.
