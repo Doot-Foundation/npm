@@ -21,6 +21,23 @@ const price = await client.getData('bitcoin');
 console.log(`Bitcoin: $${price.price_data.price}`);
 ```
 
+## zkApp-CLI Usage
+
+When using in zkApp-CLI projects, you may need to add `@ts-ignore` for TypeScript compilation:
+
+```typescript
+import dotenv from 'dotenv';
+dotenv.config();
+
+// @ts-ignore
+import { Client } from '@dootfoundation/client';
+
+const client = new Client(process.env.DOOT_API_KEY);
+const price = await client.getData('bitcoin');
+```
+
+This is only a TypeScript compilation issue - the package works perfectly at runtime in zkApp-CLI environments.
+
 ## Supported Tokens
 
 - `bitcoin` - Bitcoin (BTC)
