@@ -19,6 +19,7 @@ declare class Client {
     Key: string;
     BaseURL: string;
     MinaL1Endpoint: string;
+    MinaL1ArchiveEndpoint: string;
     ZekoL2Endpoint: string;
     DootL1Address: PublicKey;
     DootL2Address: PublicKey;

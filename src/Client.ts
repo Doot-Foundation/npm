@@ -60,6 +60,7 @@ class Client {
   Key: string;
   BaseURL: string;
   MinaL1Endpoint: string;
+  MinaL1ArchiveEndpoint: string;
   ZekoL2Endpoint: string;
   DootL1Address: PublicKey;
   DootL2Address: PublicKey;
@@ -83,6 +84,7 @@ class Client {
     this.Key = key;
     this.BaseURL = "https://doot.foundation";
     this.MinaL1Endpoint = "https://api.minascan.io/node/devnet/v1/graphql";
+    this.MinaL1ArchiveEndpoint = "https://api.minascan.io/archive/devnet/v1/graphql";
     this.ZekoL2Endpoint = "https://devnet.zeko.io/graphql";
     // Both L1 and L2 use the same contract address
     this.DootL1Address = PublicKey.fromBase58(
@@ -154,7 +156,7 @@ class Client {
   /**
    * Setup network connection and cache it
    */
-  private setupNetwork(endpoint: string, isL2: boolean): any {
+  private setupNetwork(endpoint: string, archiveEndpoint: string, isL2: boolean): any {
     if (isL2 && this.l2Network) {
       return this.l2Network;
     }
@@ -164,7 +166,7 @@ class Client {
 
     const network = Mina.Network({
       mina: endpoint,
-      archive: endpoint,
+      archive: archiveEndpoint,
     });
 
     if (isL2) {
@@ -312,8 +314,8 @@ class Client {
       const operation = async () => {
         console.log(`Connecting to Zeko L2: ${this.ZekoL2Endpoint}`);
 
-        // Setup Zeko L2 network using cached connection
-        const ZekoL2 = this.setupNetwork(this.ZekoL2Endpoint, true);
+        // Setup Zeko L2 network using cached connection (L2 uses same endpoint for mina and archive)
+        const ZekoL2 = this.setupNetwork(this.ZekoL2Endpoint, this.ZekoL2Endpoint, true);
         Mina.setActiveInstance(ZekoL2);
 
         console.log(`Fetching account: ${this.DootL2Address.toBase58()}`);
@@ -395,9 +397,10 @@ class Client {
     try {
       const operation = async () => {
         console.log(`Connecting to Mina L1: ${this.MinaL1Endpoint}`);
+        console.log(`Archive endpoint: ${this.MinaL1ArchiveEndpoint}`);
 
-        // Setup Mina L1 network using cached connection
-        const MinaL1 = this.setupNetwork(this.MinaL1Endpoint, false);
+        // Setup Mina L1 network using cached connection (L1 uses separate archive endpoint)
+        const MinaL1 = this.setupNetwork(this.MinaL1Endpoint, this.MinaL1ArchiveEndpoint, false);
         Mina.setActiveInstance(MinaL1);
 
         console.log(`Fetching account: ${this.DootL1Address.toBase58()}`);
