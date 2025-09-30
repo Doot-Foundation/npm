@@ -246,7 +246,17 @@ class Client {
                 console.log('Getting prices from contract...');
                 const dootZkApp = new Doot(this.DootL2Address);
                 dootZkApp.offchainState.setContractInstance(dootZkApp);
-                const allPrices = await dootZkApp.getPrices();
+                let allPrices;
+                try {
+                    allPrices = await dootZkApp.getPrices();
+                }
+                catch (priceError) {
+                    // Check if error is root mismatch (Field.assertEquals failure)
+                    if (priceError.message && priceError.message.includes('Field.assertEquals')) {
+                        throw new Error('OffchainState still settling, please wait for a while before calling again');
+                    }
+                    throw priceError;
+                }
                 // Extract specific token price
                 const tokenIndex = tokenIndexMap[token];
                 if (tokenIndex === undefined) {
@@ -308,7 +318,17 @@ class Client {
                 console.log('Getting prices from contract...');
                 const dootZkApp = new Doot(this.DootL1Address);
                 dootZkApp.offchainState.setContractInstance(dootZkApp);
-                const allPrices = await dootZkApp.getPrices();
+                let allPrices;
+                try {
+                    allPrices = await dootZkApp.getPrices();
+                }
+                catch (priceError) {
+                    // Check if error is root mismatch (Field.assertEquals failure)
+                    if (priceError.message && priceError.message.includes('Field.assertEquals')) {
+                        throw new Error('OffchainState still settling, please wait for a while before calling again');
+                    }
+                    throw priceError;
+                }
                 // Extract specific token price
                 const tokenIndex = tokenIndexMap[token];
                 if (tokenIndex === undefined) {
