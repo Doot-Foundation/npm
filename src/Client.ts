@@ -45,6 +45,17 @@ interface ClientResultObject {
   proof_data: string;
 }
 
+interface CacheEntry {
+  data: ClientResultObject;
+  timestamp: number;
+  source: 'L1' | 'L2';
+}
+
+interface CompilationState {
+  isCompiled: boolean;
+  compiledAt: number;
+}
+
 class Client {
   Key: string;
   BaseURL: string;
@@ -52,6 +63,20 @@ class Client {
   ZekoL2Endpoint: string;
   DootL1Address: PublicKey;
   DootL2Address: PublicKey;
+
+  // Compilation state tracking
+  private compilationState: CompilationState = {
+    isCompiled: false,
+    compiledAt: 0
+  };
+
+  // Price cache (2-3 minutes)
+  private priceCache: Map<string, CacheEntry> = new Map();
+  private readonly CACHE_DURATION = 3 * 60 * 1000; // 3 minutes in milliseconds
+
+  // Network instances cache
+  private l1Network: any = null;
+  private l2Network: any = null;
 
 
   constructor(key: string) {
@@ -66,6 +91,89 @@ class Client {
     this.DootL2Address = PublicKey.fromBase58(
       "B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP"
     );
+  }
+
+  /**
+   * Compile contracts once and cache the result
+   */
+  private async ensureCompiled(): Promise<void> {
+    if (this.compilationState.isCompiled) {
+      console.log('Using cached compilation...');
+      return;
+    }
+
+    console.log('Compiling offchain state and Doot contract (one-time)...');
+
+    if (offchainState && typeof offchainState.compile === 'function') {
+      try {
+        await offchainState.compile();
+      } catch (error) {
+        console.error('offchainState compilation failed with:', error);
+        throw new Error(
+          `OffchainState compilation failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+      }
+    }
+
+    await Doot.compile();
+
+    this.compilationState.isCompiled = true;
+    this.compilationState.compiledAt = Date.now();
+    console.log('Compilation completed and cached');
+  }
+
+  /**
+   * Get cached price data if available and fresh
+   */
+  private getCachedPrice(token: string, source: 'L1' | 'L2'): ClientResultObject | null {
+    const cacheKey = `${token}-${source}`;
+    const cached = this.priceCache.get(cacheKey);
+
+    if (cached && (Date.now() - cached.timestamp) < this.CACHE_DURATION) {
+      console.log(`Using cached ${source} price for ${token} (${Math.round((Date.now() - cached.timestamp) / 1000)}s old)`);
+      return cached.data;
+    }
+
+    return null;
+  }
+
+  /**
+   * Cache price data
+   */
+  private setCachedPrice(token: string, source: 'L1' | 'L2', data: ClientResultObject): void {
+    const cacheKey = `${token}-${source}`;
+    this.priceCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      source
+    });
+  }
+
+  /**
+   * Setup network connection and cache it
+   */
+  private setupNetwork(endpoint: string, isL2: boolean): any {
+    if (isL2 && this.l2Network) {
+      return this.l2Network;
+    }
+    if (!isL2 && this.l1Network) {
+      return this.l1Network;
+    }
+
+    const network = Mina.Network({
+      mina: endpoint,
+      archive: endpoint,
+    });
+
+    if (isL2) {
+      this.l2Network = network;
+    } else {
+      this.l1Network = network;
+    }
+
+    return network;
   }
 
   /**
@@ -194,15 +302,18 @@ class Client {
       throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
     }
 
+    // Check cache first
+    const cached = this.getCachedPrice(token, 'L2');
+    if (cached) {
+      return cached;
+    }
+
     try {
       const operation = async () => {
         console.log(`Connecting to Zeko L2: ${this.ZekoL2Endpoint}`);
 
-        // Setup Zeko L2 network
-        const ZekoL2 = Mina.Network({
-          mina: this.ZekoL2Endpoint,
-          archive: this.ZekoL2Endpoint,
-        });
+        // Setup Zeko L2 network using cached connection
+        const ZekoL2 = this.setupNetwork(this.ZekoL2Endpoint, true);
         Mina.setActiveInstance(ZekoL2);
 
         console.log(`Fetching account: ${this.DootL2Address.toBase58()}`);
@@ -211,25 +322,12 @@ class Client {
           throw new Error(`Failed to fetch account: ${accountResult.error.statusText}`);
         }
 
-        console.log('Compiling offchain state...');
-        if (offchainState && typeof offchainState.compile === 'function') {
-          try {
-            await offchainState.compile();
-          } catch (error) {
-            console.error('offchainState compilation failed with:', error);
-            throw new Error(
-              `OffchainState compilation failed: ${
-                error instanceof Error ? error.message : String(error)
-              }`
-            );
-          }
-        }
-
-        console.log('Compiling Doot contract...');
-        await Doot.compile();
+        // Use shared compilation
+        await this.ensureCompiled();
 
         console.log('Getting prices from contract...');
         const dootZkApp = new Doot(this.DootL2Address);
+        dootZkApp.offchainState.setContractInstance(dootZkApp);
         const allPrices = await dootZkApp.getPrices();
 
         // Extract specific token price
@@ -241,7 +339,7 @@ class Client {
         const tokenPrice = allPrices.prices[tokenIndex];
         console.log(`Retrieved ${token} price from L2: ${tokenPrice.toString()}`);
 
-        return {
+        const result = {
           fromAPI: false,
           fromL2: true,
           fromL1: false,
@@ -256,6 +354,10 @@ class Client {
           },
           proof_data: "",
         };
+
+        // Cache the result
+        this.setCachedPrice(token, 'L2', result);
+        return result;
       };
 
       return await operation();
@@ -274,15 +376,18 @@ class Client {
       throw new Error(`Invalid token! Supported: ${validtokens.join(', ')}`);
     }
 
+    // Check cache first
+    const cached = this.getCachedPrice(token, 'L1');
+    if (cached) {
+      return cached;
+    }
+
     try {
       const operation = async () => {
         console.log(`Connecting to Mina L1: ${this.MinaL1Endpoint}`);
 
-        // Setup Mina L1 network
-        const MinaL1 = Mina.Network({
-          mina: this.MinaL1Endpoint,
-          archive: this.MinaL1Endpoint,
-        });
+        // Setup Mina L1 network using cached connection
+        const MinaL1 = this.setupNetwork(this.MinaL1Endpoint, false);
         Mina.setActiveInstance(MinaL1);
 
         console.log(`Fetching account: ${this.DootL1Address.toBase58()}`);
@@ -291,25 +396,12 @@ class Client {
           throw new Error(`Failed to fetch account: ${accountResult.error.statusText}`);
         }
 
-        console.log('Compiling offchain state...');
-        if (offchainState && typeof offchainState.compile === 'function') {
-          try {
-            await offchainState.compile();
-          } catch (error) {
-            console.error('offchainState compilation failed with:', error);
-            throw new Error(
-              `OffchainState compilation failed: ${
-                error instanceof Error ? error.message : String(error)
-              }`
-            );
-          }
-        }
-
-        console.log('Compiling Doot contract...');
-        await Doot.compile();
+        // Use shared compilation
+        await this.ensureCompiled();
 
         console.log('Getting prices from contract...');
         const dootZkApp = new Doot(this.DootL1Address);
+        dootZkApp.offchainState.setContractInstance(dootZkApp);
         const allPrices = await dootZkApp.getPrices();
 
         // Extract specific token price
@@ -321,7 +413,7 @@ class Client {
         const tokenPrice = allPrices.prices[tokenIndex];
         console.log(`Retrieved ${token} price from L1: ${tokenPrice.toString()}`);
 
-        return {
+        const result = {
           fromAPI: false,
           fromL2: false,
           fromL1: true,
@@ -336,6 +428,10 @@ class Client {
           },
           proof_data: "",
         };
+
+        // Cache the result
+        this.setCachedPrice(token, 'L1', result);
+        return result;
       };
 
       return await operation();

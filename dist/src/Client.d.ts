@@ -22,7 +22,28 @@ declare class Client {
     ZekoL2Endpoint: string;
     DootL1Address: PublicKey;
     DootL2Address: PublicKey;
+    private compilationState;
+    private priceCache;
+    private readonly CACHE_DURATION;
+    private l1Network;
+    private l2Network;
     constructor(key: string);
+    /**
+     * Compile contracts once and cache the result
+     */
+    private ensureCompiled;
+    /**
+     * Get cached price data if available and fresh
+     */
+    private getCachedPrice;
+    /**
+     * Cache price data
+     */
+    private setCachedPrice;
+    /**
+     * Setup network connection and cache it
+     */
+    private setupNetwork;
     /**
      * Check if API key is valid
      */
