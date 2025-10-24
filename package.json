@@ -1,6 +1,6 @@
 {
   "name": "@dootfoundation/client",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Doot client to handle o1js compatible data feeds For The Mina Protocol.",
   "type": "module",
   "main": "dist/index.js",

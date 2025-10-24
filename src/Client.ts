@@ -88,10 +88,10 @@ class Client {
     this.ZekoL2Endpoint = "https://devnet.zeko.io/graphql";
     // Both L1 and L2 use the same contract address
     this.DootL1Address = PublicKey.fromBase58(
-      "B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP"
+      "B62qqDChniw14RWMJ8Dd8K36w3DJxYp1ngGyqVvR9gqSR7C1AbG97Mo"
     );
     this.DootL2Address = PublicKey.fromBase58(
-      "B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP"
+      "B62qqDChniw14RWMJ8Dd8K36w3DJxYp1ngGyqVvR9gqSR7C1AbG97Mo"
     );
   }
 
