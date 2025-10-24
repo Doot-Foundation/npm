@@ -74,7 +74,7 @@ async function testWithDelay(testName, testFn, delay = 1000) {
 
 async function runTests() {
   console.log(`Test Token: ${TEST_TOKEN}`);
-  console.log(`Contract Address: B62qrbDCjDYEypocUpG3m6eL62zcvexsaRjhSJp5JWUQeny1qVEKbyP`);
+  console.log(`Contract Address: B62qqDChniw14RWMJ8Dd8K36w3DJxYp1ngGyqVvR9gqSR7C1AbG97Mo`);
 
   // Test 1: Valid API key (should use API) - using new method
   await testWithDelay(
